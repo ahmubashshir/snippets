@@ -1,9 +1,18 @@
 #!/bin/bash
-trap 'kill $(jobs -p) 2>/dev/null' TERM EXIT QUIT ABRT
+trap 'die' TERM EXIT QUIT ABRT
+function die
+{
+	# XXX: Add your other cleanups here.
+
+	kill $(jobs -p) 2> /dev/null
+}
 
 for ((i = 0; i < 100; i++)); do
 	((jobs++))
+
+	# XXX: Do your own job here.
 	sleep $((i % 5)) &
+
 	until ((jobs < 5)); do
 		jobs=$(jobs -r -p | wc -l)
 		printf '\33[2K\r -> Completed tasks %d/%d' "$((i - jobs))" "100"
