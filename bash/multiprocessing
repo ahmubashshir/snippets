@@ -1,0 +1,16 @@
+#!/bin/bash
+trap 'kill $(jobs -p) 2>/dev/null' TERM EXIT QUIT ABRT
+
+for ((i = 0; i < 100; i++)); do
+	((jobs++))
+	sleep $((i % 5)) &
+	until ((jobs < 5)); do
+		jobs=$(jobs -r -p | wc -l)
+		printf '\33[2K\r -> Completed tasks %d/%d' "$((i - jobs))" "100"
+	done
+done
+while ((jobs > 0)); do
+	jobs=$(jobs -r -p | wc -l)
+	printf '\33[2K\r -> Completed tasks %d/%d' "$((100 - jobs))" "100"
+done
+echo
