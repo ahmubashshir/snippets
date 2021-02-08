@@ -2,7 +2,7 @@
 trap 'die' TERM EXIT QUIT ABRT
 function die
 {
-	# XXX: Add your other cleanups here.
+	# TODO: Add your other cleanups here.
 
 	kill $(jobs -p) 2> /dev/null
 }
@@ -10,7 +10,7 @@ function die
 for ((i = 0; i < 100; i++)); do
 	((jobs++))
 
-	# XXX: Do your own job here.
+	# TODO: Do your own job here.
 	sleep $((i % 5)) &
 
 	until ((jobs < 5)); do
