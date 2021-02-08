@@ -1,0 +1,19 @@
+#!/bin/sh
+trap 'rm -f $hyperfine' TERM EXIT QUIT ABRT
+trap 'exit' INT
+hyperfine=$(mktemp /tmp/hyperfine.XXXXXX)
+toolver=$(
+	curl -s --config /dev/null -IXGET https://github.com/sharkdp/hyperfine/releases/latest |
+		sed -nE '/^location:/{s@.*/tag/(.*)$@\1@p}' |
+		xargs printf '%q' |
+		sed -n 's/.\(.*\).$.*/\1/p'
+)
+arch=$(uname -m)
+case $arch in
+	arm) abi=gnueabihf ;;
+	*) abi=gnu ;;
+esac
+curl -s https://github.com/sharkdp/hyperfine/releases/download/$toolver/hyperfine-$toolver-$arch-unknown-linux-$abi.tar.gz |
+	bsdtar -xOf - hyperfine-$toolver-$arch-unknown-linux-$abi/hyperfine > "$hyperfine"
+chmod +x "$hyperfine"
+"$hyperfine" "$@"
