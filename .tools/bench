@@ -1,19 +1,32 @@
 #!/bin/sh
-trap 'rm -f $hyperfine' TERM EXIT QUIT ABRT
-trap 'exit' INT
-hyperfine=$(mktemp /tmp/hyperfine.XXXXXX)
-toolver=$(
-	curl -s --config /dev/null -IXGET https://github.com/sharkdp/hyperfine/releases/latest |
-		sed -nE '/^location:/{s@.*/tag/(.*)$@\1@p}' |
-		xargs printf '%q' |
-		sed -n 's/.\(.*\).$.*/\1/p'
-)
-arch=$(uname -m)
-case $arch in
-	arm) abi=gnueabihf ;;
-	*) abi=gnu ;;
-esac
-curl -s https://github.com/sharkdp/hyperfine/releases/download/$toolver/hyperfine-$toolver-$arch-unknown-linux-$abi.tar.gz |
-	bsdtar -xOf - hyperfine-$toolver-$arch-unknown-linux-$abi/hyperfine > "$hyperfine"
-chmod +x "$hyperfine"
-"$hyperfine" "$@"
+hyperfine=$(env which hyperfine 2> /dev/null)
+if [ -z "$hyperfine" ]; then
+	mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}/bench"
+	hyperfine="${XDG_CACHE_HOME:-$HOME/.cache}/bench/hyperfine"
+	ltver=0.0.0
+	rtver=$(
+		curl -s --config /dev/null -IXGET https://github.com/sharkdp/hyperfine/releases/latest |
+			sed -nE '/^location:/{s@.*/tag/(|v)(.*)$@\2@p}' |
+			xargs printf '%q' |
+			sed -n 's/.\(.*\).$.*/\1/p'
+	)
+	if [ -x "$hyperfine" ]; then
+		ltver=$("$hyperfine" --version | awk '{print $2}')
+	fi
+	arch=$(uname -m)
+	case $arch in
+		arm) abi=gnueabihf ;;
+		*) abi=gnu ;;
+	esac
+	if
+		[ ! -f "$hyperfine" ] ||
+			test "$(echo "$ltver $rtver" | tr " " "n" | sort -V | head -n 1)" != "$rtver"
+	then
+		curl -s \
+			"https://github.com/sharkdp/hyperfine/releases/download/$rtver/hyperfine-v$rtver-$arch-unknown-linux-$abi.tar.gz" |
+			bsdtar -xOf - "hyperfine-$rtver-$arch-unknown-linux-$abi/hyperfine" > "$hyperfine"
+	fi
+	chmod +x "$hyperfine"
+fi
+
+exec "$hyperfine" "$@"
