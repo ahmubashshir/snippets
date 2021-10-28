@@ -1,10 +1,24 @@
 #!/bin/bash
-trap 'die' TERM EXIT QUIT ABRT
+trap 'die' EXIT
+trap 'exit $?' INT TERM QUIT ABRT
+
 function die
 {
-	# TODO: Add your other cleanups here.
+	if ! ((trapped)); then
+		ret=$?
+		trap ':' INT TERM QUIT ABRT EXIT
+	fi
+	(( ret == 0 && !trapped ))  || printf '\n'
+	((trapped)) || export trapped=1
+	if pgrep -xP "$$" &> /dev/null; then
+		printf '\r -> Terminating threads.   \b\b\b'
+		pkill -xP "$$"
+		pwait -xP "$$"
+	fi
 
-	kill $(jobs -p) 2> /dev/null
+	# TODO: Add your other cleanups here.
+	printf ' -> Cleaning up.\n'
+	exit $ret
 }
 
 for ((i = 0; i < 100; i++)); do
@@ -23,3 +37,4 @@ while ((jobs > 0)); do
 	printf '\33[2K\r -> Completed tasks %d/%d' "$((100 - jobs))" "100"
 done
 echo
+

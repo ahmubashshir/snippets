@@ -10,6 +10,5 @@ if [[ $1 == "@single" ]]; then
 elif [[ $1 == "@multi" ]]; then
 	source "${0%/*}/../bash/multiprocessing"
 else
-
 	"${0%/*}/../.tools/bench" "$0 @multi" "$0 @single"
 fi
