@@ -27,15 +27,13 @@
 
 int main(int argc, char **argv)
 {
-	if (argc < 2)
-	{
+	if (argc < 2) {
 		return EINVAL; // Exit if argument is less than 2
 	}
 
 	char **eargv = malloc(argc * sizeof(char*)); // Allocate exec argument array
 
-	for(int i=0; i<argc-1; i++)
-	{
+	for(int i=0; i<argc-1; i++) {
 		eargv[i] = argv[i+1]; // slice argv[1:]
 	}
 	eargv[argc-1] = NULL; // denote the end of arguments with NULL
